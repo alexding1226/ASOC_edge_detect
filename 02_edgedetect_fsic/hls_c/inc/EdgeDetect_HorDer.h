@@ -67,8 +67,12 @@ namespace EdgeDetect_IP
           pix2 = pix_buf1;
           pix1 = pix_buf0;
           if (x <= widthIn-4) {
-            streamin = pix_chan1.read(); // Read streaming interface
-            pix0 = streamin.pix;
+            if (pix_chan1.available(1)) {
+              streamin = pix_chan1.read(); // Read streaming interface
+              pix0 = streamin.pix;
+            }
+            //streamin = pix_chan1.read(); // Read streaming interface
+            //pix0 = streamin.pix;
           }
           if (x == 4) {
             pix2.set_slc(24, pix1.slc<8>(0));

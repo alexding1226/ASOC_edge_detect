@@ -59,16 +59,21 @@ namespace EdgeDetect_IP {
       gradType g0, g1, g2, g3;
       Stream_t streamin;
       Stream_t streamout;
+
   
       // Remove loop upperbounds for RTL code coverage
       // Use bit accurate data types on loop iterator
-      VROW: for (maxHType y = 0; ; y++) { // VROW has one extra iteration to ramp-up window
+      VROW: for (maxHType y = 0; ; y=y+1) { // VROW has one extra iteration to ramp-up window
         #pragma hls_pipeline_init_interval 1
-        VCOL: for (maxWType x = 0; ; x+=4) {
+        VCOL: for (maxWType x = 0; ; x=x+4) {
           if (y <= heightIn-1) {
-            streamin = dat_in.read(); // Read streaming interface
-            pix0 = streamin.pix;
-
+            if (dat_in.available(1)) {
+              streamin = dat_in.read(); // Read streaming interface
+              pix0 = streamin.pix;
+            }
+            // else {
+            //   cout << "ERROR: Not enough data with x = " << x << " y = " << y << endl;
+            // }
           }
           // Write data cache, write lower 8 on even iterations of COL loop, upper 8 on odd
           if ( (x&4) == 0 ) {
@@ -116,7 +121,7 @@ namespace EdgeDetect_IP {
             dy_chan.write(pix); // derivative output
           }
           // programmable width exit condition
-          if (x == maxWType(widthIn-1)) { // cast to maxWType for RTL code coverage
+          if (x == maxWType(widthIn-4)) { // cast to maxWType for RTL code coverage
             break;
           }
         }

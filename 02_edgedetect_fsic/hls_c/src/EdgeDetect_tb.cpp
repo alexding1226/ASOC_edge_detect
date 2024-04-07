@@ -89,6 +89,7 @@ CCS_MAIN(int argc, char *argv[])
   
     cnt = 0;
     EdgeDetect_IP::pixelType4x pix4;
+    cout << "height: " << height << " width: " << width << endl;
     for (unsigned int y = 0; y < height; y++) {
       for (unsigned int x = 0; x < width; x+=4) {
         pix4.set_slc( 0, (EdgeDetect_IP::pixelType) yarray[cnt+0]);

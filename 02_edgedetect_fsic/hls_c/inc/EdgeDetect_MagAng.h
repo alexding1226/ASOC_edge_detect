@@ -91,8 +91,14 @@ namespace EdgeDetect_IP
       MROW: for (maxHType y = 0; ; y++) {
         #pragma hls_pipeline_init_interval 1
         MCOL: for (maxWType x = 0; ; x=x+4) {
-          dx = dx_chan.read();
-          dy = dy_chan.read();
+          if (dx_chan.available(1)){
+            dx = dx_chan.read();
+          }
+          if (dy_chan.available(1)){
+            dy = dy_chan.read();
+          }
+          // dx = dx_chan.read();
+          // dy = dy_chan.read();
           // dx_sq = dx * dx;
           // dy_sq = dy * dy;
           // sum = dx_sq + dy_sq;
@@ -130,7 +136,10 @@ namespace EdgeDetect_IP
           sum.set_slc(16, sum2);
           sum.set_slc(24, sum3);
 
-          streamin = pix_chan2.read();
+          if (pix_chan2.available(1)){
+            streamin = pix_chan2.read();
+          }
+          //streamin = pix_chan2.read();
 
           crc32_pix_in = calc_crc32<32>(crc32_pix_in, streamin.pix);
 

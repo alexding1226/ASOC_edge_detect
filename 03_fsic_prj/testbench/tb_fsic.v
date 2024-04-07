@@ -22,6 +22,9 @@
 //	reference https://blog.csdn.net/seabeam/article/details/41078023, the source is come from http://www.deepchip.com/items/0466-07.html
 //	 Not using #0 is a good guideline, except for event data types.  In Verilog, there is no way to defer the event triggering to the nonblocking event queue.
 `define USER_PROJECT_SIDEBAND_SUPPORT 1
+`define USE_EDGEDETECT_IP 1
+
+//my
 
 module tb_fsic #( parameter BITS=32,
 		`ifdef USER_PROJECT_SIDEBAND_SUPPORT
@@ -288,16 +291,16 @@ FSIC #(
 		.wbs_cyc(wbs_cyc),
 		.wbs_stb(wbs_stb),
 		.wbs_we(wbs_we),
-		.la_data_in(la_data_in),
-		.la_oenb(la_oenb),
+		// .la_data_in(la_data_in),
+		// .la_oenb(la_oenb),
 		.io_in(io_in),
-		.vccd1(vccd1),
-		.vccd2(vccd2),
-		.vssd1(vssd1),
-		.vssd2(vssd2),
+		// .vccd1(vccd1),
+		// .vccd2(vccd2),
+		// .vssd1(vssd1),
+		// .vssd2(vssd2),
 		.wbs_ack(wbs_ack),
 		.wbs_rdata(wbs_rdata),		
-		.la_data_out(la_data_out),
+		//.la_data_out(la_data_out),
 		.user_irq(user_irq),
 		.io_out(io_out),
 		.io_oeb(io_oeb),
@@ -370,6 +373,15 @@ FSIC #(
 		.is_as_tuser(fpga_is_as_tuser),
 		.is_as_tready(fpga_is_as_tready)
 	);
+	reg [7:0] img_in_list[0:230399];
+	initial begin
+		$readmemh("../in_img.hex", img_in_list);
+	end
+	
+	reg [7:0] img_out_list[0:230399];
+	initial begin
+		$readmemh("../out_img.hex", img_out_list);
+	end	
 
 	assign wb_clk = soc_coreclk;
 	assign wb_rst = ~soc_resetb;		//wb_rst is high active
@@ -390,6 +402,11 @@ FSIC #(
 	//connect output part : io_out to mprj_io
 	assign mprj_io[TXCLK_OFFSET] = io_out[TXCLK_OFFSET];
 	assign mprj_io[TXD_OFFSET +: pSERIALIO_WIDTH] = io_out[TXD_OFFSET +: pSERIALIO_WIDTH];
+	integer streamin_i,streamout_i;
+	initial begin
+		$dumpfile("FSIC.vcd");
+		$dumpvars(0, tb_fsic);
+	end
 	
     initial begin
 		ioclk_source=0;
@@ -410,18 +427,18 @@ FSIC #(
 		error_cnt = 0;
 		check_cnt = 0;
 
-        
-		test001();	//soc cfg write/read test
-		test002();	//test002_fpga_axis_req
-		test003();	//test003_fpga_to_soc_cfg_read
-		test004();	//test004_fpga_to_soc_mail_box_write
-		test005();	//test005_aa_mailbox_soc_cfg
-		test006();	//test006_fpga_to_soc_cfg_write
-		test007();	//test007_mailbox_interrupt test
+        testedge();
+		// test001();	//soc cfg write/read test
+		// test002();	//test002_fpga_axis_req
+		// test003();	//test003_fpga_to_soc_cfg_read
+		// test004();	//test004_fpga_to_soc_mail_box_write
+		// test005();	//test005_aa_mailbox_soc_cfg
+		// test006();	//test006_fpga_to_soc_cfg_write
+		// test007();	//test007_mailbox_interrupt test
 		
 
 
-		#400;
+		#4000;
 		$display("=============================================================================================");
 		$display("=============================================================================================");
 		$display("=============================================================================================");
@@ -460,6 +477,96 @@ FSIC #(
 	end    
 	
 	always #(ioclk_pd/2) ioclk_source = ~ioclk_source;
+
+	integer correct_cnt, myerror_cnt;
+
+	task testedge;
+		begin
+			// initial 
+			fork 
+				soc_apply_reset(40,40);
+				fpga_apply_reset(40,40);
+			join
+			#40;
+			fpga_as_to_is_init();
+			fpga_cc_is_enable=1;
+			fork 
+				soc_is_cfg_write(0, 4'b0001, 1);				//ioserdes rxen
+				fpga_cfg_write(0,1,1,0);
+			join
+			#400;
+			fork 
+				soc_is_cfg_write(0, 4'b0001, 3);				//ioserdes txen
+				fpga_cfg_write(0,3,1,0);
+			join
+			#200;
+			soc_my_cfg_write(32'h3000_0004, 4'b0001, 640);
+			soc_my_cfg_write(32'h3000_0008, 4'b0001, 360);
+			soc_my_cfg_write(32'h3000_000c, 4'b0001, 1);
+			correct_cnt = 0;
+			myerror_cnt = 0;
+
+			for (streamin_i=0; streamin_i<360*640; streamin_i=streamin_i+4) begin
+				fpga_axis_req({img_in_list[streamin_i+3],img_in_list[streamin_i+2], img_in_list[streamin_i+1],img_in_list[streamin_i]}, 
+				2'b00, 0, 0);
+			end
+			for (streamout_i=0; streamout_i<230400; streamout_i=streamout_i+4) begin
+					fpga_is_as_data_compare(
+						{img_out_list[streamout_i+3], 
+						img_out_list[streamout_i+2], 
+						img_out_list[streamout_i+1], 
+						img_out_list[streamout_i]});
+			end 
+			$display("-------------------------------------------------");
+			$display("correct_cnt = %d, error_cnt = %d", correct_cnt, myerror_cnt);
+			$display("-------------------------------------------------");
+		end
+	endtask
+	task soc_my_cfg_write;
+		input [31:0] adr;		//4K range
+		input [3:0] sel;
+		input [31:0] data;
+		
+		begin
+			@ (posedge soc_coreclk);		
+			wbs_adr <= adr;
+			//wbs_adr[11:0] <= offset[11:0];	//only provide DW address 
+			
+			wbs_wdata <= data;
+			wbs_sel <= sel;
+			wbs_cyc <= 1'b1;
+			wbs_stb <= 1'b1;
+			wbs_we <= 1'b1;	
+			
+			@(posedge soc_coreclk);
+			while(wbs_ack==0) begin
+				@(posedge soc_coreclk);
+			end
+
+			$display($time, "=> soc_my_cfg_write : wbs_adr=%x, wbs_sel=%b, wbs_wdata=%x", wbs_adr, wbs_sel, wbs_wdata); 
+		end
+	endtask	
+	task fpga_is_as_data_compare;
+		input [31:0] golden;
+		begin
+			fpga_as_is_tready <= 1;		
+			$strobe($time, "=> fpga_is_as_data_valid wait fpga_is_as_tvalid");
+			@ (posedge fpga_coreclk);
+			while (fpga_is_as_tvalid == 0) begin		// wait util fpga_is_as_tvalid == 1 
+					@ (posedge fpga_coreclk);
+			end
+			
+			if (fpga_is_as_tdata == golden) begin
+				correct_cnt = correct_cnt + 1;
+			end
+			else begin
+				$display("Error at expect %d, get %d", golden, fpga_is_as_tdata);
+				myerror_cnt = myerror_cnt + 1;
+			end
+			
+			$strobe($time, "=> fpga_is_as_data_valid wait fpga_is_as_tvalid done, fpga_is_as_tvalid = %b", fpga_is_as_tvalid);
+		end
+	endtask
 //Willy debug - s
 
 	task test007;
@@ -1588,7 +1695,7 @@ FSIC #(
 				tkeep = 4'b0000;
 				//tstrb = 4'b1111;
 				//tkeep = 4'b1111;
-				tlast = 1'b0;
+				tlast = upsb[1];
                                 exp_data = {tst_img_out_buf[idx3+3], tst_img_out_buf[idx3+2], tst_img_out_buf[idx3+1], tst_img_out_buf[idx3+0]};
 			end
 			`ifdef USER_PROJECT_SIDEBAND_SUPPORT
