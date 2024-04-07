@@ -82,8 +82,8 @@ wire        ram1_we;
 wire [63:0] ram1_d;
 wire [6:0]  ram1_adr;
 
-reg  [9:0]  reg_widthIn;
-reg  [8:0]  reg_heightIn;
+reg  [10:0]  reg_widthIn;
+reg  [9:0]  reg_heightIn;
 reg         reg_sw_in;
 reg         reg_rst;
 wire [31:0] crc32_stream_in;
@@ -126,10 +126,10 @@ always @(posedge axi_clk or negedge axi_reset_n)  begin
         if ( wstrb[0] == 1) reg_rst           <= wdata[0];
       end else if (awaddr[11:2] == 10'h001 ) begin //offset 1
         if ( wstrb[0] == 1) reg_widthIn[7:0]  <= wdata[7:0];
-        if ( wstrb[1] == 1) reg_widthIn[9:8]  <= wdata[9:8];
+        if ( wstrb[1] == 1) reg_widthIn[10:8]  <= wdata[10:8];
       end else if (awaddr[11:2] == 10'h002 ) begin //offset 2
         if ( wstrb[0] == 1) reg_heightIn[7:0] <= wdata[7:0];
-        if ( wstrb[1] == 1) reg_heightIn[8]   <= wdata[8];
+        if ( wstrb[1] == 1) reg_heightIn[9:8]   <= wdata[9:8];
       end else if (awaddr[11:2] == 10'h003 ) begin //offset 3
         if ( wstrb[0] == 1) reg_sw_in         <= wdata[0];
       end

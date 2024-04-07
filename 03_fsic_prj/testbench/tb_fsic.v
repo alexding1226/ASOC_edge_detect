@@ -505,18 +505,19 @@ FSIC #(
 			soc_my_cfg_write(32'h3000_000c, 4'b0001, 1);
 			correct_cnt = 0;
 			myerror_cnt = 0;
-
-			for (streamin_i=0; streamin_i<360*640; streamin_i=streamin_i+4) begin
-				fpga_axis_req({img_in_list[streamin_i+3],img_in_list[streamin_i+2], img_in_list[streamin_i+1],img_in_list[streamin_i]}, 
-				2'b00, 0, 0);
-			end
-			for (streamout_i=0; streamout_i<230400; streamout_i=streamout_i+4) begin
-					fpga_is_as_data_compare(
-						{img_out_list[streamout_i+3], 
-						img_out_list[streamout_i+2], 
-						img_out_list[streamout_i+1], 
-						img_out_list[streamout_i]});
-			end 
+			fork
+				for (streamin_i=0; streamin_i<360*640; streamin_i=streamin_i+4) begin
+					fpga_axis_req({img_in_list[streamin_i+3],img_in_list[streamin_i+2], img_in_list[streamin_i+1],img_in_list[streamin_i]}, 
+					2'b00, 0, 0);
+				end
+				for (streamout_i=0; streamout_i<230400; streamout_i=streamout_i+4) begin
+						fpga_is_as_data_compare(
+							{img_out_list[streamout_i+3], 
+							img_out_list[streamout_i+2], 
+							img_out_list[streamout_i+1], 
+							img_out_list[streamout_i]});
+				end 
+			join
 			$display("-------------------------------------------------");
 			$display("correct_cnt = %d, error_cnt = %d", correct_cnt, myerror_cnt);
 			$display("-------------------------------------------------");
@@ -557,6 +558,7 @@ FSIC #(
 			end
 			
 			if (fpga_is_as_tdata == golden) begin
+				$display("Correct at expect %d, get %d", golden, fpga_is_as_tdata);
 				correct_cnt = correct_cnt + 1;
 			end
 			else begin
@@ -1204,25 +1206,25 @@ FSIC #(
 			@(posedge fpga_coreclk);
 			`ifdef USER_PROJECT_SIDEBAND_SUPPORT
 				if (fpga_is_as_tvalid == 1 && fpga_is_as_tid == TID_UP_UP && fpga_is_as_tuser == TUSER_AXIS) begin
-					$display($time, "=> get soc_to_fpga_axis be : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tupsb=%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tupsb, fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
+					//$display($time, "=> get soc_to_fpga_axis be : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tupsb=%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tupsb, fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
 					soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count] = {fpga_is_as_tupsb, fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata} ;		//use block assignment
-					$display($time, "=> get soc_to_fpga_axis af : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tupsb=%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tupsb, fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
+					//$display($time, "=> get soc_to_fpga_axis af : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tupsb=%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tupsb, fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
 					soc_to_fpga_axis_captured_count = soc_to_fpga_axis_captured_count+1;
 				end	
 				if ( (soc_to_fpga_axis_captured_count == fpga_axis_test_length) && !soc_to_fpga_axis_event_triggered) begin
-					$display($time, "=> soc_to_fpga_axis_captured : send soc_to_fpga_axiis_event");
+					//$display($time, "=> soc_to_fpga_axis_captured : send soc_to_fpga_axiis_event");
 					#0 -> soc_to_fpga_axis_event;
 					soc_to_fpga_axis_event_triggered = 1;
 				end 
 			`else
 				if (fpga_is_as_tvalid == 1 && fpga_is_as_tid == TID_UP_UP && fpga_is_as_tuser == TUSER_AXIS) begin
-					$display($time, "=> get soc_to_fpga_axis be : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
+					//$display($time, "=> get soc_to_fpga_axis be : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
 					soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count] = {fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata} ;		//use block assignment
-					$display($time, "=> get soc_to_fpga_axis af : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
+					//$display($time, "=> get soc_to_fpga_axis af : soc_to_fpga_axis_captured_count=%d,  soc_to_fpga_axis_captured[%d] =%x, fpga_is_as_tstrb=%x, fpga_is_as_tkeep=%x , fpga_is_as_tlast=%x, fpga_is_as_tdata=%x", soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured_count, soc_to_fpga_axis_captured[soc_to_fpga_axis_captured_count], fpga_is_as_tstrb, fpga_is_as_tkeep , fpga_is_as_tlast, fpga_is_as_tdata);
 					soc_to_fpga_axis_captured_count = soc_to_fpga_axis_captured_count+1;
 				end	
 				if ( (soc_to_fpga_axis_captured_count == fpga_axis_test_length) && !soc_to_fpga_axis_event_triggered) begin
-					$display($time, "=> soc_to_fpga_axis_captured : send soc_to_fpga_axiis_event");
+					//$display($time, "=> soc_to_fpga_axis_captured : send soc_to_fpga_axiis_event");
 					#0 -> soc_to_fpga_axis_event;
 					soc_to_fpga_axis_event_triggered = 1;
 				end 

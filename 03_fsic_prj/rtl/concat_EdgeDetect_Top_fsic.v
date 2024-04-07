@@ -5712,6 +5712,35 @@ module EdgeDetect_Top (
   output [63:0] line_buf1_rsc_d;
   output [9:0] line_buf1_rsc_adr;
 
+// clk                    
+// rst                    
+// arst_n                 
+// widthIn                
+// heightIn               
+// sw_in                  
+// crc32_pix_in_rsc_zin   
+// crc32_pix_in_rsc_zout  
+// crc32_pix_in_rsc_lzout 
+// crc32_dat_out_rsc_zin  
+// crc32_dat_out_rsc_zout 
+// crc32_dat_out_triosy_lz
+// dat_in_rsc_dat         
+// dat_in_rsc_vld         
+// dat_in_rsc_rdy         
+// dat_out_rsc_dat        
+// dat_out_rsc_vld        
+// dat_out_rsc_rdy        
+// line_buf0_rsc_en       
+// line_buf0_rsc_q        
+// line_buf0_rsc_we       
+// line_buf0_rsc_d        
+// line_buf0_rsc_adr      
+// line_buf1_rsc_en       
+// line_buf1_rsc_q        
+// line_buf1_rsc_we       
+// line_buf1_rsc_d        
+// line_buf1_rsc_adr      
+
 
   //output [31:0] crc32_pix_in_rsc_dat;
 
