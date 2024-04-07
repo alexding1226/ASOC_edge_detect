@@ -47,9 +47,10 @@ namespace EdgeDetect_IP {
     EdgeDetect_MagAng MagAng_inst;
   
     // Static interconnect channels (FIFOs) between blocks
-    ac_channel<gradType>       dy;
-    ac_channel<gradType>       dx;
-    ac_channel<pixelType>      dat; // channel for passing input pixels to horizontalDerivative
+    ac_channel<gradType4x>       dy_chan;
+    ac_channel<gradType4x>       dx_chan;
+    ac_channel<Stream_t>      pix_chan1; // channel for passing input pixels to horizontalDerivative
+    ac_channel<Stream_t>      pix_chan2; // channel for passing input pixels to horizontalDerivative
   
   public:
     EdgeDetect_Top() {}
@@ -59,15 +60,17 @@ namespace EdgeDetect_IP {
     //   Top interface for data in/out of class. Combines vertical and
     //   horizontal derivative and magnitude/angle computation.
     #pragma hls_design interface
-    void CCS_BLOCK(run)(ac_channel<pixelType> &dat_in,
-                        maxWType              &widthIn,
-                        maxHType              &heightIn,
-                        ac_channel<magType>   &magn,
-                        ac_channel<angType>   &angle)
+    void CCS_BLOCK(run)(maxWType              widthIn,
+                        maxHType              heightIn,
+                        bool                  sw_in,
+                        uint32                &crc32_pix_in,
+                        uint32                &crc32_dat_out,
+                        ac_channel<Stream_t>  &dat_in,
+                        ac_channel<Stream_t>  &dat_out)
     {
-      VerDer_inst.run(dat_in, widthIn, heightIn, dat, dy);
-      HorDer_inst.run(dat, widthIn, heightIn, dx);
-      MagAng_inst.run(dx, dy, widthIn, heightIn, magn, angle);
+      VerDer_inst.run(dat_in, widthIn, heightIn, pix_chan1, dy_chan);
+      HorDer_inst.run(pix_chan1, widthIn, heightIn, pix_chan2, dx_chan);
+      MagAng_inst.run(dx_chan, dy_chan, pix_chan2, widthIn, heightIn, sw_in, crc32_pix_in, crc32_dat_out, dat_out);
     }
   };
 

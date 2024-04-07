@@ -18,13 +18,13 @@ CCS_MAIN(int argc, char *argv[])
   //const int iW = 1296;
   //const int iH = 864;
  
-  //const int maxImageWidth  = EdgeDetect_IP::maxImageWidth;
-  //const int maxImageHeight = EdgeDetect_IP::maxImageHeight;
+  const int maxImageWidth  = EdgeDetect_IP::maxImageWidth;
+  const int maxImageHeight = EdgeDetect_IP::maxImageHeight;
 
   const int FRAME_NUM = 1;
 
   EdgeDetect_Algorithm<maxImageWidth, maxImageHeight> ref_inst;
-  /*EdgeDetect_IP::*/EdgeDetect_Top dut;
+  EdgeDetect_IP::EdgeDetect_Top dut;
 
   unsigned long int width;
   long int height;
@@ -58,16 +58,16 @@ CCS_MAIN(int argc, char *argv[])
   cout << "Output file (hw):    " << bmpBA << endl;
 
   bmp_read((char*)bmpIn.c_str(), &width, &height, &rarray, &garray, &barray);
-  /*EdgeDetect_IP::*/maxWType widthIn = width;
-  /*EdgeDetect_IP::*/maxHType heightIn = height;
+  EdgeDetect_IP::maxWType widthIn = width;
+  EdgeDetect_IP::maxHType heightIn = height;
 
   cout << "Image width: " << width << endl;
   cout << "Image height: " << height << endl;
 
-  ac_channel</*EdgeDetect_IP::*/Stream_t>  din_chn;
-  ac_channel</*EdgeDetect_IP::*/Stream_t>  dout_chn;
+  ac_channel<EdgeDetect_IP::Stream_t>  din_chn;
+  ac_channel<EdgeDetect_IP::Stream_t>  dout_chn;
 
-  /*EdgeDetect_IP::*/Stream_t dat;
+  EdgeDetect_IP::Stream_t dat;
 
   unsigned char *dat_in_orig = new unsigned char[width*height];
   double *magn_orig = new double[width*height];
@@ -88,13 +88,13 @@ CCS_MAIN(int argc, char *argv[])
     printf("############################################# FRAME NO. %3d ###############################################\n", frm_idx);
   
     cnt = 0;
-    pixelType4x pix4;
+    EdgeDetect_IP::pixelType4x pix4;
     for (unsigned int y = 0; y < height; y++) {
       for (unsigned int x = 0; x < width; x+=4) {
-        pix4.set_slc( 0, (pixelType) yarray[cnt+0]);
-        pix4.set_slc( 8, (pixelType) yarray[cnt+1]);
-        pix4.set_slc(16, (pixelType) yarray[cnt+2]);
-        pix4.set_slc(24, (pixelType) yarray[cnt+3]);
+        pix4.set_slc( 0, (EdgeDetect_IP::pixelType) yarray[cnt+0]);
+        pix4.set_slc( 8, (EdgeDetect_IP::pixelType) yarray[cnt+1]);
+        pix4.set_slc(16, (EdgeDetect_IP::pixelType) yarray[cnt+2]);
+        pix4.set_slc(24, (EdgeDetect_IP::pixelType) yarray[cnt+3]);
         //if (frm_idx == 1)
         //  pix4.set_slc(16, (pixelType) 0);
 

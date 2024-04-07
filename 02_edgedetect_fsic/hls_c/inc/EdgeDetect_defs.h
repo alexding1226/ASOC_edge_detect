@@ -48,7 +48,10 @@ namespace EdgeDetect_IP
   // Define some bit-accurate types to use in this model
   typedef uint8                  pixelType;    // input pixel is 0-255
   typedef uint16                 pixelType2x;  // two pixels packed
+  typedef uint32                 pixelType4x;  // four pixels packed
+  typedef ac_int<64, false>      pixelType8x;  // eight pixels packed
   typedef int9                   gradType;     // Derivative is max range -255 to 255
+  typedef int36                  gradType4x;   // 4 gradients packed
   typedef uint18                 sqType;       // Result of 9-bit x 9-bit
   typedef ac_fixed<19,19,false>  sumType;      // Result of 18-bit + 18-bit fixed pt integer for squareroot
   typedef uint9                  magType;      // 9-bit unsigned magnitute result
@@ -57,6 +60,12 @@ namespace EdgeDetect_IP
   // Compute number of bits for max image size count, used internally and in testbench
   typedef ac_int<ac::nbits<maxImageWidth+1>::val,false> maxWType;
   typedef ac_int<ac::nbits<maxImageHeight+1>::val,false> maxHType;
+
+  struct  Stream_t{ // the data type that sent from and received by testbench 
+    pixelType4x pix;     // package of 4 unsigned pixels
+    bool   sof;     // start of file
+    bool   eol;     // end of line
+  };
 }
 
 
