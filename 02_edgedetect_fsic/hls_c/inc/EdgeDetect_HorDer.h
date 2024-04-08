@@ -75,11 +75,13 @@ namespace EdgeDetect_IP
             //pix0 = streamin.pix;
           }
           if (x == 4) {
-            pix2.set_slc(24, pix1.slc<8>(0));
+            // pix2.set_slc(24, pix1.slc<8>(0));
+            pix2.set_slc(24, pix1.slc<8>(8));  // reflect mode
             //pix2 = pix1; // left boundary (replicate pix1 left to pix2)
           }
           if (x == widthIn) {
-            pix0.set_slc(0, pix1.slc<8>(24)); 
+            // pix0.set_slc(0, pix1.slc<8>(24)); 
+            ix0.set_slc(0, pix1.slc<8>(16));  // reflect mode
             //pix0 = pix1; // right boundary (replicate pix1 right to pix0)
           }
   
