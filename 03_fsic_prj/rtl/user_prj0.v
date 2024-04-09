@@ -189,6 +189,51 @@ always @(posedge axi_clk or negedge axi_reset_n)  begin
   end
 end
 
+reg [2:0] r_ptr;
+reg [2:0] w_ptr;
+reg [(FIFO_WIDTH-1) : 0] fifo[7:0];
+
+wire full;
+wire empty;
+
+assign empty = (r_ptr == w_ptr);
+assign full = (r_ptr == (w_ptr+1) );
+
+//for push to fifo
+always @(posedge axis_clk or negedge axis_rst_n)  begin
+  if ( !axis_rst_n ) begin
+    w_ptr <= 0;
+  end
+  else begin
+	if ( ss_tready && ss_tvalid) begin
+		`ifdef USER_PROJECT_SIDEBAND_SUPPORT
+			fifo[w_ptr] <= {ss_tupsb, ss_tstrb, ss_tkeep, ss_tlast, ss_tdata}; 
+		`else
+			fifo[w_ptr] <= {ss_tstrb, ss_tkeep, ss_tlast, ss_tdata}; 
+		`endif
+		w_ptr <= w_ptr + 1;
+	end
+  end
+end  
+
+//for pop from fifo
+`ifdef USER_PROJECT_SIDEBAND_SUPPORT
+	assign {sm_tupsb, sm_tstrb, sm_tkeep, sm_tlast, sm_tdata} = fifo[r_ptr];
+`else
+	assign {sm_tstrb, sm_tkeep, sm_tlast, sm_tdata} = fifo[r_ptr];
+`endif
+
+always @(posedge axis_clk or negedge axis_rst_n)  begin
+  if ( !axis_rst_n ) begin
+    r_ptr <= 0;
+  end
+  else begin
+	if ( sm_tready && sm_tvalid) begin
+		r_ptr <= r_ptr + 1;
+	end
+  end
+end  
+
 EdgeDetect_Top U_EdgeDetect (
 .clk                     (axi_clk           ), //user_clock2 ?
 .rst                     (reg_rst           ), 
