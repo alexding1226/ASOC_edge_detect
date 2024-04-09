@@ -81,7 +81,7 @@ namespace EdgeDetect_IP
           }
           if (x == widthIn) {
             // pix0.set_slc(0, pix1.slc<8>(24)); 
-            ix0.set_slc(0, pix1.slc<8>(16));  // reflect mode
+            pix0.set_slc(0, pix1.slc<8>(16));  // reflect mode
             //pix0 = pix1; // right boundary (replicate pix1 right to pix0)
           }
   
